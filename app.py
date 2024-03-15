@@ -39,7 +39,7 @@ def chat(q):
         openai_api_key=OPENAI_API_KEY
     )
 
-   
+#    
 
     index_name='docu-help'
 
