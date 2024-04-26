@@ -4,7 +4,7 @@ from langchain_openai import OpenAIEmbeddings
 import time
 
 
-PINE_API_KEY = "ce2759c7-e66a-412f-99bc-61951a615cd9"
+PINE_API_KEY = ""
 
 index_name='splade'
 
