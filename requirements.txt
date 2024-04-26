@@ -1,8 +1,10 @@
-flask
-langchain==0.1.1
-langchain-community==0.0.13
-openai
-tiktoken
+pinecone-text==0.1.0
 pinecone-client==3.0.0
-langchain-openai
-fireworks-ai
+fastapi>=0.85.0,<1.0
+uvicorn>=0.23.2,<0.24
+pydantic>=1.0,<2.0
+mangum>=0.14.0  # For AWS Lambda/Serverless adaptation
+langchain>=0.1,<0.2
+langchain-anthropic>=0.1.4,<0.2
+langchain-community>=0.0.34,<0.1
+langserve>=0.0.30,<0.1
