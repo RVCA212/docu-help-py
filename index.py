@@ -3,7 +3,7 @@ app = Flask(__name__)
 from os import environ
 OPENAI_API_KEY=environ.get('OPENAI_API_KEY')
 from os import environ
-FIREWORKS_API_KEY=environ.get('FIREWORKS_API_KEY')
+ANTHROPIC_API_KEY=environ.get('ANTHROPIC_API_KEY')
 from os import environ
 PINE_API_KEY=environ.get('PINE_API_KEY')
 
@@ -27,7 +27,7 @@ def chat(q):
     from langchain_core.output_parsers import StrOutputParser
     from langchain_core.prompts import ChatPromptTemplate
     from langchain_core.runnables import RunnableParallel, RunnablePassthrough
-    from langchain_community.chat_models.fireworks import ChatFireworks
+    from langchain_anthropic import ChatAnthropic
     # Import Module
     import json
 
@@ -73,8 +73,7 @@ def chat(q):
     """
     prompt = ChatPromptTemplate.from_template(template)
 
-    # RAG
-    model = ChatFireworks(temperature=0, model="accounts/fireworks/models/mixtral-8x7b-instruct", fireworks_api_key=FIREWORKS_API_KEY)
+    model = ChatAnthropic(temperature=0, anthropic_api_key=ANTHROPIC_API_KEY, model_name="claude-3-haiku-20240307")
 
     def format_docs_with_sources(docs):
         # This function formats the documents and includes their sources.
@@ -133,7 +132,7 @@ def chatting():
     from langchain_core.output_parsers import StrOutputParser
     from langchain_core.prompts import ChatPromptTemplate
     from langchain_core.runnables import RunnableParallel, RunnablePassthrough
-    from langchain_community.chat_models.fireworks import ChatFireworks
+    from langchain_anthropic import ChatAnthropic
     # Import Module
     import json
 
@@ -177,7 +176,7 @@ def chatting():
     prompt = ChatPromptTemplate.from_template(template)
 
     # RAG
-    model = ChatFireworks(temperature=0, model="accounts/fireworks/models/mixtral-8x7b-instruct", fireworks_api_key=FIREWORKS_API_KEY)
+    model = ChatAnthropic(temperature=0, anthropic_api_key=ANTHROPIC_API_KEY, model_name="claude-3-haiku-20240307")
 
     def format_docs_with_sources(docs):
         # This function formats the documents and includes their sources.
