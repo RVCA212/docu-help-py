@@ -1,8 +1,8 @@
 flask
-langchain==0.1.1
-langchain-community==0.0.13
+langchain==0.1.16
+langchain-community
 openai
 tiktoken
 pinecone-client==3.0.0
 langchain-openai
-fireworks-ai
+pinecone-text[splade]
