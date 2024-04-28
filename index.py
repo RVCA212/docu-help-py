@@ -120,7 +120,7 @@ def chat(namespace_name, q):
 def chatting():
     requestBody = request.get_json()
     q = requestBody['question']
-    namespace_name = request_data['namespace_name']
+    namespace_name = requestBody['namespace_name']
     # self.send_response(200)
     # self.send_header('Content-type','text/plain')
     # self.end_headers()
