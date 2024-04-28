@@ -15,8 +15,8 @@ def welcome():
 def home():
     return jsonify({"msg": "Home page here"})
 
-@app.route("/chatting/<string:q>")
-def chat(q):
+@app.route("/chatting/<string:namespace_name>/<string:q>")
+def chat(namespace_name, q):
     # self.send_response(200)
     # self.send_header('Content-type','text/plain')
     # self.end_headers()
@@ -42,8 +42,6 @@ def chat(q):
 #    
 
     index_name='docu-help'
-
-    namespace_name='Langchain'
 
     # pc = Pinecone(api_key=PINE_API_KEY)
     pc = PineconeClient(api_key=PINE_API_KEY)
@@ -122,6 +120,7 @@ def chat(q):
 def chatting():
     requestBody = request.get_json()
     q = requestBody['question']
+    namespace_name = request_data['namespace_name']
     # self.send_response(200)
     # self.send_header('Content-type','text/plain')
     # self.end_headers()
