@@ -1,7 +1,6 @@
 flask
 langchain==0.1.16
 langchain-community
-openai
 tiktoken
 pinecone-client==3.0.0
 langchain-openai
