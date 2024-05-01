@@ -56,9 +56,10 @@ def retrieve():
     json_response = [
         {
             "page_content": doc.page_content,
-            "source": doc.metadata['source']  # Make sure this line is exactly as shown
+            "source": doc.metadata.get('source', 'No source available')  # Provides a default if 'source' is missing
         } for doc in results
     ]
+
 
     return jsonify(json_response)
 
