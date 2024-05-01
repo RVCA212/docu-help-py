@@ -19,6 +19,7 @@ def retrieve():
     requestBody = request.get_json()
     q = requestBody['question']
     namespace_name = requestBody['namespace_name']
+
     # Import necessary modules
     import time
     from langchain_openai import OpenAIEmbeddings
@@ -26,15 +27,15 @@ def retrieve():
     from langchain_community.retrievers import PineconeHybridSearchRetriever
     from pinecone import Pinecone
     import json
-    
+
     embed = OpenAIEmbeddings(
         model='text-embedding-3-small',
         openai_api_key=OPENAI_API_KEY,
-        dimensions = 768
+        dimensions=768
     )
-    
-    index_name='splade'
-    
+
+    index_name = 'splade'
+
     pc = Pinecone(api_key=PINE_API_KEY)
     
     index = pc.Index(index_name)
@@ -50,14 +51,15 @@ def retrieve():
     )
 
     results = retriever.invoke(q)
+
     # Structure the results into a list of dictionaries with desired keys
     json_response = [
         {
             "page_content": doc.page_content,
-            "source": doc.metadata['source']  # Accessing source from metadata dictionary
+            "source": doc.metadata['source']  # Make sure this line is exactly as shown
         } for doc in results
     ]
 
-
     return jsonify(json_response)
+
 
