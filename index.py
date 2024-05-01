@@ -50,7 +50,7 @@ def retrieve():
         embeddings=embed, sparse_encoder=splade_encoder, index=index, namespace=namespace_name, top_k=4
     )
 
-    results = retriever.invoke(q)
+    results = retriever.get_relevant_documents(q)
 
     # Structure the results into a list of dictionaries with desired keys
     json_response = [
