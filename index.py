@@ -54,9 +54,10 @@ def retrieve():
     json_response = [
         {
             "page_content": doc.page_content,
-            "source": doc.source
+            "source": doc.metadata['source']  # Accessing source from metadata dictionary
         } for doc in results
     ]
+
 
     return jsonify(json_response)
 
