@@ -4,4 +4,4 @@ langchain-community
 tiktoken
 pinecone-client==3.0.0
 langchain-openai
-pinecone-text
+pinecone-text[splade]
