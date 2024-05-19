@@ -1,11 +1,76 @@
 from flask import Flask, jsonify, request
+from langchain.agents import tool
+from langchain_core.pydantic_v1 import BaseModel, Field
+from langchain_core.tools import Tool
+from langchain import hub
+from langchain_anthropic import ChatAnthropic
+from langchain.agents.output_parsers import XMLAgentOutputParser
+from langchain.agents import AgentExecutor
+import requests
+import os
+
 app = Flask(__name__)
-from os import environ
-OPENAI_API_KEY=environ.get('OPENAI_API_KEY')
-from os import environ
-ANTHROPIC_API_KEY=environ.get('ANTHROPIC_API_KEY')
-from os import environ
-PINE_API_KEY=environ.get('PINE_API_KEY')
+
+# Define the schema for the API retrieval tool input
+class APIQueryInput(BaseModel):
+    query: str = Field()
+
+# Define the API retrieval function
+def new_api_retriever(query):
+    url = f"http://api.rag.pro/getModel/Langchain/{query}?top_k=2"
+    response = requests.get(url)
+    return response.json()
+
+# Define the tool using the retrieval function
+api_retrieval_tool = Tool.from_function(
+    func=new_api_retriever,
+    name="APIRetriever",
+    description="Retrieves data from Langchain's Documentation, Source Code, Examples, etc.",
+    args_schema=APIQueryInput
+)
+
+tools = [api_retrieval_tool]
+
+# Defining XML Agent
+prompt = hub.pull("hwchase17/xml-agent-convo")
+
+# Initialize connection to Anthropic
+ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY')
+
+llm = ChatAnthropic(
+    anthropic_api_key=ANTHROPIC_API_KEY,
+    model_name="claude-3-haiku-20240307",
+    temperature=0.0
+)
+
+def convert_intermediate_steps(intermediate_steps):
+    log = ""
+    for action, observation in intermediate_steps:
+        log += (
+            f"<tool>{action.tool}</tool><tool_input>{action.tool_input}"
+            f"</tool_input><observation>{observation}</observation>"
+        )
+    return log
+
+def convert_tools(tools):
+    return "\n".join([f"{tool.name}: {tool.description}" for tool in tools])
+
+agent = (
+    {
+        "input": lambda x: x["input"],
+        "chat_history": lambda x: x["chat_history"],
+        "agent_scratchpad": lambda x: convert_intermediate_steps(
+            x["intermediate_steps"]
+        ),
+    }
+    | prompt.partial(tools=convert_tools(tools))
+    | llm.bind(stop=["</tool_input>", "</final_answer>"])
+    | XMLAgentOutputParser()
+)
+
+agent_executor = AgentExecutor(
+    agent=agent, tools=tools, verbose=True
+)
 
 @app.route("/")
 def welcome():
@@ -17,204 +82,26 @@ def home():
 
 @app.route("/chatting/<string:namespace_name>/<string:q>")
 def chat(namespace_name, q):
-    # self.send_response(200)
-    # self.send_header('Content-type','text/plain')
-    # self.end_headers()
-    from pinecone import Pinecone as PineconeClient
-    import time
-    from langchain_openai import OpenAIEmbeddings
-    from langchain_community.vectorstores import Pinecone
-    from langchain_core.output_parsers import StrOutputParser
-    from langchain_core.prompts import ChatPromptTemplate
-    from langchain_core.runnables import RunnableParallel, RunnablePassthrough
-    from langchain_anthropic import ChatAnthropic
-    # Import Module
-    import json
-
-    
-    model_name = 'text-embedding-ada-002'
-
-    embed = OpenAIEmbeddings(
-        model=model_name,
-        openai_api_key=OPENAI_API_KEY
-    )
-
-#    
-
-    index_name='docu-help'
-
-    # pc = Pinecone(api_key=PINE_API_KEY)
-    pc = PineconeClient(api_key=PINE_API_KEY)
-
-    index = pc.Index(index_name)
-    # wait a moment for connection
-    time.sleep(1)
-
-    index.describe_index_stats()
-
-
-    text_field = "text"
-
-    # switch back to normal index for langchain
-    index = pc.Index(index_name)
-
-    vectorstore = Pinecone(
-        index, embed.embed_query, text_field, namespace=namespace_name
-    )
-    retriever = vectorstore.as_retriever()
-
-
-    # RAG prompt
-    template = """You are an expert software developer who specializes in APIs.  Answer the user's question based only on the following context:
-    {context}
-    Question: {question}
-    """
-    prompt = ChatPromptTemplate.from_template(template)
-
-    model = ChatAnthropic(temperature=0, anthropic_api_key=ANTHROPIC_API_KEY, model_name="claude-3-haiku-20240307")
-
-    def format_docs_with_sources(docs):
-        # This function formats the documents and includes their sources.
-        formatted_docs = []
-        for doc in docs:
-            content = doc.page_content
-            source = doc.metadata.get('source', 'Unknown source')
-            formatted_docs.append(f"{content}\nSource: {source}")
-        return "\n\n".join(formatted_docs)
-
-    rag_chain = (
-        RunnablePassthrough.assign(context=(lambda x: format_docs_with_sources(x["context"])))
-        | prompt
-        | model
-        | StrOutputParser()
-    )
-
-    rag_chain_with_source = RunnableParallel(
-        {"context": retriever, "question": RunnablePassthrough()}
-    ).assign(answer=rag_chain)
-
-    # response = rag_chain_with_source.invoke("Query goes here")
-
-    # response = rag_chain_with_source.invoke("what is langchain")
-
-    response = rag_chain_with_source.invoke(q)
-
-    answer = response['answer']  # Extracting the 'answer' part
-
-    sources = [doc.metadata['source'] for doc in response['context']]
-
-    # formatted_response = f"Answer: {answer}\n\nSources:\n" + "\n".join(sources)
-
-    json_response = {"answer": answer, "sources": sources}
-
-    # print(formatted_response)
-    # self.wfile.write('Hello, world!'.encode('utf-8'))
-    
-    # self.wfile.write(formatted_response.encode('utf-8'))
-    # return
-    # return jsonify({'hello': 'world'})
+    response = agent_executor.invoke({
+        "input": q,
+        "chat_history": ""
+    })
+    answer = response["output"]
+    json_response = {"answer": answer}
     return jsonify(json_response)
-
 
 @app.route("/chat", methods=["POST"])
 def chatting():
     requestBody = request.get_json()
     q = requestBody['question']
     namespace_name = requestBody['namespace_name']
-    # self.send_response(200)
-    # self.send_header('Content-type','text/plain')
-    # self.end_headers()
-    from pinecone import Pinecone as PineconeClient
-    import time
-    from langchain_openai import OpenAIEmbeddings
-    from langchain_community.vectorstores import Pinecone
-    from langchain_core.output_parsers import StrOutputParser
-    from langchain_core.prompts import ChatPromptTemplate
-    from langchain_core.runnables import RunnableParallel, RunnablePassthrough
-    from langchain_anthropic import ChatAnthropic
-    # Import Module
-    import json
-
-    model_name = 'text-embedding-ada-002'
-
-    embed = OpenAIEmbeddings(
-        model=model_name,
-        openai_api_key=OPENAI_API_KEY
-    )
-
-    index_name='docu-help'
-
-    namespace_name='Langchain'
-
-    # pc = Pinecone(api_key=PINE_API_KEY)
-    pc = PineconeClient(api_key=PINE_API_KEY)
-
-    index = pc.Index(index_name)
-    # wait a moment for connection
-    time.sleep(1)
-
-    index.describe_index_stats()
-
-
-    text_field = "text"
-
-    # switch back to normal index for langchain
-    index = pc.Index(index_name)
-
-    vectorstore = Pinecone(
-        index, embed.embed_query, text_field, namespace=namespace_name
-    )
-    retriever = vectorstore.as_retriever()
-
-
-    # RAG prompt
-    template = """You are an expert software developer who specializes in APIs.  Answer the user's question based only on the following context:
-    {context}
-    Question: {question}
-    """
-    prompt = ChatPromptTemplate.from_template(template)
-
-    # RAG
-    model = ChatAnthropic(temperature=0, anthropic_api_key=ANTHROPIC_API_KEY, model_name="claude-3-haiku-20240307")
-
-    def format_docs_with_sources(docs):
-        # This function formats the documents and includes their sources.
-        formatted_docs = []
-        for doc in docs:
-            content = doc.page_content
-            source = doc.metadata.get('source', 'Unknown source')
-            formatted_docs.append(f"{content}\nSource: {source}")
-        return "\n\n".join(formatted_docs)
-
-    rag_chain = (
-        RunnablePassthrough.assign(context=(lambda x: format_docs_with_sources(x["context"])))
-        | prompt
-        | model
-        | StrOutputParser()
-    )
-
-    rag_chain_with_source = RunnableParallel(
-        {"context": retriever, "question": RunnablePassthrough()}
-    ).assign(answer=rag_chain)
-
-    # response = rag_chain_with_source.invoke("Query goes here")
-
-    # response = rag_chain_with_source.invoke("what is langchain")
-
-    response = rag_chain_with_source.invoke(q)
-
-    answer = response['answer']  # Extracting the 'answer' part
-
-    sources = [doc.metadata['source'] for doc in response['context']]
-
-    # formatted_response = f"Answer: {answer}\n\nSources:\n" + "\n".join(sources)
-
-    json_response = {"answer": answer, "sources": sources}
-
-    # print(formatted_response)
-    # self.wfile.write('Hello, world!'.encode('utf-8'))
-    
-    # self.wfile.write(formatted_response.encode('utf-8'))
-    # return
-    # return jsonify({'hello': 'world'})
+    response = agent_executor.invoke({
+        "input": q,
+        "chat_history": ""
+    })
+    answer = response["output"]
+    json_response = {"answer": answer}
     return jsonify(json_response)
+
+if __name__ == "__main__":
+    app.run(debug=True)
