@@ -80,8 +80,8 @@ def welcome():
 def home():
     return jsonify({"msg": "Home page here"})
 
-@app.route("/chatting/<string:namespace_name>/<string:q>")
-def chat(namespace_name, q):
+@app.route("/chatting/<string:q>")
+def chat(q):
     response = agent_executor.invoke({
         "input": q,
         "chat_history": ""
@@ -94,7 +94,6 @@ def chat(namespace_name, q):
 def chatting():
     requestBody = request.get_json()
     q = requestBody['question']
-    namespace_name = requestBody['namespace_name']
     response = agent_executor.invoke({
         "input": q,
         "chat_history": ""
