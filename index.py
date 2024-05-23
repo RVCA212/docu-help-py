@@ -19,7 +19,6 @@ def chat(namespace_name, q):
     # self.send_header('Content-type','text/plain')
     # self.end_headers()
     import requests
-    from langchain_openai import OpenAIEmbeddings
     from langchain_core.output_parsers import StrOutputParser
     from langchain_core.prompts import ChatPromptTemplate
     from langchain_core.runnables import RunnableParallel, RunnablePassthrough
@@ -96,7 +95,6 @@ def chatting():
     # self.send_header('Content-type','text/plain')
     # self.end_headers()
     import requests
-    from langchain_openai import OpenAIEmbeddings
     from langchain_core.output_parsers import StrOutputParser
     from langchain_core.prompts import ChatPromptTemplate
     from langchain_core.runnables import RunnableParallel, RunnablePassthrough
