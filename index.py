@@ -1,8 +1,6 @@
 from flask import Flask, jsonify, request
 app = Flask(__name__)
 from os import environ
-OPENAI_API_KEY=environ.get('OPENAI_API_KEY')
-from os import environ
 ANTHROPIC_API_KEY=environ.get('ANTHROPIC_API_KEY')
 
 @app.route("/")
