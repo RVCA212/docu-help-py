@@ -70,7 +70,7 @@ def chat(namespace_name, q):
 
     answer = response['answer']  # Extracting the 'answer' part
 
-    sources = [doc.metadata['source'] for doc in response['context']]
+    sources = [doc['source'] for doc in response['context']]
 
     # formatted_response = f"Answer: {answer}\n\nSources:\n" + "\n".join(sources)
 
@@ -147,7 +147,7 @@ def chatting():
 
     answer = response['answer']  # Extracting the 'answer' part
 
-    sources = [doc.metadata['source'] for doc in response['context']]
+    sources = [doc['source'] for doc in response['context']]
 
     # formatted_response = f"Answer: {answer}\n\nSources:\n" + "\n".join(sources)
 
