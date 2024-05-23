@@ -103,7 +103,7 @@ def chatting():
 
 
     def retriever(query):
-        url = f"http://api.rag.pro/getModel/Langchain/{query}?top_k=1"
+        url = f"http://api.rag.pro/getModel/{namespace_name/{q}?top_k=1"
         response = requests.get(url)
         return response.json()
 
