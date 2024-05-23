@@ -4,8 +4,6 @@ from os import environ
 OPENAI_API_KEY=environ.get('OPENAI_API_KEY')
 from os import environ
 ANTHROPIC_API_KEY=environ.get('ANTHROPIC_API_KEY')
-from os import environ
-PINE_API_KEY=environ.get('PINE_API_KEY')
 
 @app.route("/")
 def welcome():
@@ -20,10 +18,8 @@ def chat(namespace_name, q):
     # self.send_response(200)
     # self.send_header('Content-type','text/plain')
     # self.end_headers()
-    from pinecone import Pinecone as PineconeClient
-    import time
+    import requests
     from langchain_openai import OpenAIEmbeddings
-    from langchain_community.vectorstores import Pinecone
     from langchain_core.output_parsers import StrOutputParser
     from langchain_core.prompts import ChatPromptTemplate
     from langchain_core.runnables import RunnableParallel, RunnablePassthrough
@@ -31,38 +27,13 @@ def chat(namespace_name, q):
     # Import Module
     import json
 
+
     
-    model_name = 'text-embedding-ada-002'
-
-    embed = OpenAIEmbeddings(
-        model=model_name,
-        openai_api_key=OPENAI_API_KEY
-    )
-
-#    
-
-    index_name='docu-help'
-
-    # pc = Pinecone(api_key=PINE_API_KEY)
-    pc = PineconeClient(api_key=PINE_API_KEY)
-
-    index = pc.Index(index_name)
-    # wait a moment for connection
-    time.sleep(1)
-
-    index.describe_index_stats()
-
-
-    text_field = "text"
-
-    # switch back to normal index for langchain
-    index = pc.Index(index_name)
-
-    vectorstore = Pinecone(
-        index, embed.embed_query, text_field, namespace=namespace_name
-    )
-    retriever = vectorstore.as_retriever()
-
+    # Define the API retrieval function
+    def retriever(query):
+        url = f"http://api.rag.pro/getModel/Langchain/{query}?top_k=1"
+        response = requests.get(url)
+        return response.json()
 
     # RAG prompt
     template = """You are an expert software developer who specializes in APIs.  Answer the user's question based only on the following context:
@@ -124,10 +95,8 @@ def chatting():
     # self.send_response(200)
     # self.send_header('Content-type','text/plain')
     # self.end_headers()
-    from pinecone import Pinecone as PineconeClient
-    import time
+    import requests
     from langchain_openai import OpenAIEmbeddings
-    from langchain_community.vectorstores import Pinecone
     from langchain_core.output_parsers import StrOutputParser
     from langchain_core.prompts import ChatPromptTemplate
     from langchain_core.runnables import RunnableParallel, RunnablePassthrough
@@ -135,36 +104,11 @@ def chatting():
     # Import Module
     import json
 
-    model_name = 'text-embedding-ada-002'
 
-    embed = OpenAIEmbeddings(
-        model=model_name,
-        openai_api_key=OPENAI_API_KEY
-    )
-
-    index_name='docu-help'
-
-    namespace_name='Langchain'
-
-    # pc = Pinecone(api_key=PINE_API_KEY)
-    pc = PineconeClient(api_key=PINE_API_KEY)
-
-    index = pc.Index(index_name)
-    # wait a moment for connection
-    time.sleep(1)
-
-    index.describe_index_stats()
-
-
-    text_field = "text"
-
-    # switch back to normal index for langchain
-    index = pc.Index(index_name)
-
-    vectorstore = Pinecone(
-        index, embed.embed_query, text_field, namespace=namespace_name
-    )
-    retriever = vectorstore.as_retriever()
+    def retriever(query):
+        url = f"http://api.rag.pro/getModel/Langchain/{query}?top_k=1"
+        response = requests.get(url)
+        return response.json()
 
 
     # RAG prompt
