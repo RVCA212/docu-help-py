@@ -45,10 +45,11 @@ def chat(namespace_name, q):
         # This function formats the documents and includes their sources.
         formatted_docs = []
         for doc in docs:
-            content = doc.page_content
-            source = doc.metadata.get('source', 'Unknown source')
+            content = doc.get('parent_content', 'No content available')
+            source = doc.get('source', 'Unknown source')
             formatted_docs.append(f"{content}\nSource: {source}")
         return "\n\n".join(formatted_docs)
+        
 
     rag_chain = (
         RunnablePassthrough.assign(context=(lambda x: format_docs_with_sources(x["context"])))
@@ -121,10 +122,11 @@ def chatting():
         # This function formats the documents and includes their sources.
         formatted_docs = []
         for doc in docs:
-            content = doc.page_content
-            source = doc.metadata.get('source', 'Unknown source')
+            content = doc.get('parent_content', 'No content available')
+            source = doc.get('source', 'Unknown source')
             formatted_docs.append(f"{content}\nSource: {source}")
         return "\n\n".join(formatted_docs)
+
 
     rag_chain = (
         RunnablePassthrough.assign(context=(lambda x: format_docs_with_sources(x["context"])))
